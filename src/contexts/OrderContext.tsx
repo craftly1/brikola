@@ -5,7 +5,7 @@ export interface Order {
   id: string;
   title: string;
   description: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'in-progress' | 'completed';
+  status: 'pending' | 'open-for-discussion' | 'accepted' | 'rejected' | 'waiting-client-approval' | 'in-progress' | 'completed';
   price: number;
   category: string;
   createdAt: string;
@@ -18,6 +18,7 @@ export interface Order {
   review?: string;
   images?: string[];
   hasUnreadMessages?: boolean;
+  clientApproved?: boolean;
 }
 
 export interface Message {
@@ -39,6 +40,7 @@ export interface Subscription {
   startDate: string;
   endDate: string;
   price: number;
+  type: 'monthly' | 'yearly';
 }
 
 interface OrderContextType {
@@ -52,8 +54,10 @@ interface OrderContextType {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   rateOrder: (orderId: string, rating: number, review: string) => void;
   hasActiveSubscription: () => boolean;
-  subscribe: (planName: string, price: number) => void;
+  subscribe: (planName: string, price: number, type: 'monthly' | 'yearly') => void;
   sendNotification: (title: string, message: string) => void;
+  approveWorkStart: (orderId: string) => void;
+  openForDiscussion: (orderId: string, crafterId: string, crafterName: string) => void;
 }
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
@@ -76,7 +80,7 @@ const mockOrders: Order[] = [
     id: '2',
     title: 'تركيب مكيف هواء',
     description: 'مطلوب فني تكييف لتركيب مكيف جديد',
-    status: 'in-progress',
+    status: 'open-for-discussion',
     price: 300,
     category: 'تكييف',
     createdAt: '2024-01-14T15:30:00Z',
@@ -101,7 +105,8 @@ const mockOrders: Order[] = [
     crafterId: 'crafter2',
     crafterName: 'يوسف الصباغ',
     rating: 5,
-    review: 'عمل ممتاز وسريع'
+    review: 'عمل ممتاز وسريع',
+    clientApproved: true
   }
 ];
 
@@ -128,10 +133,21 @@ const mockMessages: Message[] = [
   }
 ];
 
+const mockSubscription: Subscription = {
+  id: '1',
+  userId: 'crafter1',
+  planName: 'العضوية الشهرية',
+  status: 'active',
+  startDate: '2024-01-01T00:00:00Z',
+  endDate: '2024-02-01T00:00:00Z',
+  price: 50,
+  type: 'monthly'
+};
+
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(mockSubscription);
   const [userType, setUserType] = useState<'client' | 'crafter'>('client');
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
@@ -142,8 +158,17 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
     setOrders(prev => [newOrder, ...prev]);
     
-    // إرسال إشعار للحرفيين
     sendNotification('طلب جديد', `طلب جديد: ${newOrder.title}`);
+  };
+
+  const openForDiscussion = (orderId: string, crafterId: string, crafterName: string) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { ...order, status: 'open-for-discussion', crafterId, crafterName }
+        : order
+    ));
+    
+    sendNotification('طلب مفتوح للنقاش', 'حرفي مهتم بطلبك ويريد مناقشة التفاصيل');
   };
 
   const updateOrderStatus = (orderId: string, status: Order['status'], crafterId?: string, crafterName?: string) => {
@@ -153,10 +178,10 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         : order
     ));
     
-    // إرسال إشعار
     const statusText = {
       'accepted': 'تم قبول الطلب',
       'rejected': 'تم رفض الطلب',
+      'waiting-client-approval': 'في انتظار موافقة العميل',
       'in-progress': 'بدء تنفيذ الطلب',
       'completed': 'تم إنجاز الطلب'
     }[status];
@@ -164,6 +189,16 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (statusText) {
       sendNotification('تحديث الطلب', statusText);
     }
+  };
+
+  const approveWorkStart = (orderId: string) => {
+    setOrders(prev => prev.map(order => 
+      order.id === orderId 
+        ? { ...order, status: 'in-progress', clientApproved: true }
+        : order
+    ));
+    
+    sendNotification('موافقة العميل', 'تم الموافقة على بداية العمل');
   };
 
   const addMessage = (messageData: Omit<Message, 'id' | 'timestamp'>) => {
@@ -174,14 +209,12 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
     setMessages(prev => [newMessage, ...prev]);
     
-    // تحديث حالة الرسائل غير المقروءة
     setOrders(prev => prev.map(order => 
       order.id === messageData.orderId
         ? { ...order, hasUnreadMessages: true }
         : order
     ));
     
-    // إرسال إشعار
     sendNotification('رسالة جديدة', `رسالة من ${messageData.senderName}`);
   };
 
@@ -192,7 +225,6 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         : order
     ));
     
-    // إرسال إشعار للحرفي
     sendNotification('تقييم جديد', `تم تقييمك بـ ${rating} نجوم`);
   };
 
@@ -201,15 +233,17 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return subscription.status === 'active' && new Date(subscription.endDate) > new Date();
   };
 
-  const subscribe = (planName: string, price: number) => {
+  const subscribe = (planName: string, price: number, type: 'monthly' | 'yearly') => {
+    const duration = type === 'monthly' ? 30 : 365;
     const newSubscription: Subscription = {
       id: Date.now().toString(),
       userId: 'currentUser',
       planName,
       status: 'active',
       startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // شهر واحد
-      price
+      endDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
+      price,
+      type
     };
     setSubscription(newSubscription);
     
@@ -218,7 +252,6 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const sendNotification = (title: string, message: string) => {
     console.log('Notification:', { title, message });
-    // هنا يتم دمج Firebase Cloud Messaging
   };
 
   return (
@@ -234,7 +267,9 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       rateOrder,
       hasActiveSubscription,
       subscribe,
-      sendNotification
+      sendNotification,
+      approveWorkStart,
+      openForDiscussion
     }}>
       {children}
     </OrderContext.Provider>

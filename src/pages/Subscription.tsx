@@ -1,84 +1,58 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Crown, Star, Zap } from 'lucide-react';
+import { ArrowLeft, Check, Crown, Star, Shield, Zap } from 'lucide-react';
 import { useOrder } from '../contexts/OrderContext';
 import { Button } from '../components/ui/button';
 
 const Subscription: React.FC = () => {
   const navigate = useNavigate();
-  const { subscribe, subscription, hasActiveSubscription } = useOrder();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { subscription, subscribe, hasActiveSubscription } = useOrder();
 
   const plans = [
     {
-      id: 'basic',
-      name: 'الأساسي',
-      price: 29,
-      duration: 'شهر',
-      icon: Star,
-      color: 'bg-blue-500',
-      features: [
-        'عرض تفاصيل الطلبات',
-        'التواصل مع العملاء',
-        'حتى 20 طلب شهرياً',
-        'دعم فني أساسي'
-      ]
-    },
-    {
-      id: 'premium',
-      name: 'المميز',
-      price: 79,
-      duration: '3 أشهر',
-      icon: Crown,
-      color: 'bg-amber-500',
+      id: 'monthly',
+      name: 'العضوية الشهرية',
+      price: 50,
+      duration: 'شهر واحد',
+      type: 'monthly' as const,
       popular: true,
       features: [
-        'جميع مميزات الأساسي',
-        'أولوية في عرض الملف الشخصي',
-        'طلبات غير محدودة',
-        'إحصائيات مفصلة',
+        'عرض جميع تفاصيل الطلبات',
+        'التواصل مع العملاء',
+        'قبول الطلبات ورفضها',
+        'الدردشة المباشرة',
+        'إشعارات فورية',
         'دعم فني على مدار الساعة'
-      ]
+      ],
+      icon: <Crown className="w-6 h-6" />,
+      gradient: 'from-amber-400 to-yellow-500'
     },
     {
-      id: 'professional',
-      name: 'الاحترافي',
-      price: 149,
-      duration: '6 أشهر',
-      icon: Zap,
-      color: 'bg-purple-500',
+      id: 'yearly',
+      name: 'العضوية السنوية',
+      price: 500,
+      originalPrice: 600,
+      duration: 'سنة كاملة',
+      type: 'yearly' as const,
+      savings: '100 ر.س',
       features: [
-        'جميع مميزات المميز',
-        'شارة الحرفي المحترف',
-        'تسويق مجاني للخدمات',
-        'تحليلات متقدمة',
-        'مدير حساب مخصص'
-      ]
+        'جميع مميزات العضوية الشهرية',
+        'خصم 17% على السعر',
+        'أولوية في عرض الطلبات',
+        'تقارير شهرية مفصلة',
+        'شارة "حرفي متميز"',
+        'دعم فني متقدم'
+      ],
+      icon: <Star className="w-6 h-6" />,
+      gradient: 'from-purple-500 to-indigo-600'
     }
   ];
 
-  const handleSubscribe = async (planId: string) => {
-    const plan = plans.find(p => p.id === planId);
-    if (!plan) return;
-
-    setIsProcessing(true);
-    setSelectedPlan(planId);
-
-    try {
-      // محاكاة عملية الدفع
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      subscribe(plan.name, plan.price);
-      alert(`تم تفعيل اشتراك ${plan.name} بنجاح!`);
-      navigate('/orders');
-    } catch (error) {
-      alert('حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى.');
-    } finally {
-      setIsProcessing(false);
-      setSelectedPlan(null);
-    }
+  const handleSubscribe = (planName: string, price: number, type: 'monthly' | 'yearly') => {
+    subscribe(planName, price, type);
+    // هنا يتم التوجيه لصفحة الدفع
+    navigate('/orders');
   };
 
   return (
@@ -100,116 +74,153 @@ const Subscription: React.FC = () => {
       </div>
 
       <div className="px-4 py-6">
-        {/* Current Subscription Status */}
+        {/* Current Subscription */}
         {hasActiveSubscription() && subscription && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                <Check className="w-5 h-5 text-white" />
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Shield className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-green-800">الاشتراك النشط</h3>
+                  <p className="text-green-600">{subscription.planName}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-green-800">اشتراك نشط</h3>
+              <div className="text-right">
+                <p className="text-green-800 font-bold">{subscription.price} ر.س</p>
                 <p className="text-sm text-green-600">
-                  خطة {subscription.planName} - تنتهي في {new Date(subscription.endDate).toLocaleDateString('ar-SA')}
+                  صالح حتى: {new Date(subscription.endDate).toLocaleDateString('ar-SA')}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Header Text */}
+        {/* Hero Section */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">اختر خطتك المناسبة</h2>
-          <p className="text-gray-600">
-            فعّل اشتراكك للوصول لجميع الطلبات والتواصل مع العملاء
-          </p>
-        </div>
-
-        {/* Plans */}
-        <div className="space-y-4 mb-8">
-          {plans.map((plan) => {
-            const IconComponent = plan.icon;
-            const isSelected = selectedPlan === plan.id;
-            const isProcessingThis = isProcessing && isSelected;
-            
-            return (
-              <div
-                key={plan.id}
-                className={`bg-white rounded-xl p-6 shadow-sm border-2 transition-all ${
-                  plan.popular ? 'border-amber-300 ring-2 ring-amber-100' : 'border-gray-100'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="bg-amber-500 text-white text-sm font-medium px-3 py-1 rounded-full inline-block mb-4">
-                    الأكثر شعبية
-                  </div>
-                )}
-                
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`${plan.color} w-12 h-12 rounded-xl flex items-center justify-center`}>
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
-                      <p className="text-gray-500 text-sm">{plan.duration}</p>
-                    </div>
-                  </div>
-                  <div className="text-left">
-                    <div className="text-3xl font-bold text-gray-800">{plan.price}</div>
-                    <div className="text-sm text-gray-500">ريال</div>
-                  </div>
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => handleSubscribe(plan.id)}
-                  disabled={isProcessing || hasActiveSubscription()}
-                  className={`w-full ${
-                    plan.popular 
-                      ? 'bg-amber-500 hover:bg-amber-600' 
-                      : 'bg-gray-800 hover:bg-gray-900'
-                  } text-white`}
-                >
-                  {isProcessingThis ? 'جار المعالجة...' : 
-                   hasActiveSubscription() ? 'مفعل' : 
-                   `اشترك في ${plan.name}`}
-                </Button>
+          <div className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white rounded-2xl p-8 mb-6">
+            <Crown className="w-16 h-16 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">كن حرفياً مميزاً</h2>
+            <p className="text-amber-100">احصل على عضوية مميزة واكسب أكثر من خلال الطلبات</p>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="text-center">
+              <div className="bg-blue-100 p-3 rounded-lg mb-2 mx-auto w-fit">
+                <Zap className="w-6 h-6 text-blue-600" />
               </div>
-            );
-          })}
-        </div>
-
-        {/* Payment Methods */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">طرق الدفع المتاحة</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl mb-2">💳</div>
-              <span className="text-sm text-gray-600">بطاقة ائتمان</span>
+              <h4 className="font-medium text-gray-800">وصول فوري</h4>
+              <p className="text-sm text-gray-600">للطلبات الجديدة</p>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl mb-2">📱</div>
-              <span className="text-sm text-gray-600">محفظة رقمية</span>
+            <div className="text-center">
+              <div className="bg-green-100 p-3 rounded-lg mb-2 mx-auto w-fit">
+                <Star className="w-6 h-6 text-green-600" />
+              </div>
+              <h4 className="font-medium text-gray-800">تقييم مميز</h4>
+              <p className="text-sm text-gray-600">من العملاء</p>
             </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl mb-2">🏦</div>
-              <span className="text-sm text-gray-600">تحويل بنكي</span>
+            <div className="text-center">
+              <div className="bg-purple-100 p-3 rounded-lg mb-2 mx-auto w-fit">
+                <Shield className="w-6 h-6 text-purple-600" />
+              </div>
+              <h4 className="font-medium text-gray-800">دعم متميز</h4>
+              <p className="text-sm text-gray-600">24/7</p>
             </div>
           </div>
         </div>
 
-        <p className="text-xs text-gray-500 text-center mt-6 px-4">
-          يمكنك إلغاء الاشتراك في أي وقت. جميع الدفعات آمنة ومشفرة.
-        </p>
+        {/* Pricing Plans */}
+        <div className="space-y-6">
+          {plans.map((plan) => (
+            <div
+              key={plan.id}
+              className={`bg-white rounded-2xl p-6 shadow-sm border hover:shadow-md transition-all duration-200 ${
+                plan.popular ? 'border-amber-300 relative' : 'border-gray-200'
+              }`}
+            >
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    الأكثر شعبية
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-gradient-to-r ${plan.gradient} text-white`}>
+                    {plan.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">{plan.name}</h3>
+                    <p className="text-gray-600">{plan.duration}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-gray-800">{plan.price}</span>
+                    <span className="text-gray-600">ر.س</span>
+                  </div>
+                  {plan.originalPrice && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-400 line-through">{plan.originalPrice} ر.س</span>
+                      <span className="text-green-600 font-medium">وفر {plan.savings}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-800 mb-3">المميزات المتاحة:</h4>
+                <div className="space-y-2">
+                  {plan.features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span className="text-gray-700">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={() => handleSubscribe(plan.name, plan.price, plan.type)}
+                disabled={hasActiveSubscription() && subscription?.type === plan.type}
+                className={`w-full py-3 text-lg font-medium rounded-lg transition-colors ${
+                  hasActiveSubscription() && subscription?.type === plan.type
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : plan.popular
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white'
+                    : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white'
+                }`}
+              >
+                {hasActiveSubscription() && subscription?.type === plan.type 
+                  ? 'مفعل حالياً' 
+                  : 'اشترك الآن'
+                }
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-12 bg-white rounded-2xl p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">الأسئلة الشائعة</h3>
+          <div className="space-y-4">
+            <div>
+              <h4 className="font-medium text-gray-800 mb-1">متى يبدأ الاشتراك؟</h4>
+              <p className="text-gray-600 text-sm">يبدأ الاشتراك فور إتمام عملية الدفع ويستمر للمدة المحددة.</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-800 mb-1">هل يمكنني إلغاء الاشتراك؟</h4>
+              <p className="text-gray-600 text-sm">نعم، يمكنك إلغاء الاشتراك في أي وقت من خلال الإعدادات.</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-800 mb-1">ما طرق الدفع المتاحة؟</h4>
+              <p className="text-gray-600 text-sm">نقبل جميع البطاقات الائتمانية والحوالات البنكية المحلية.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

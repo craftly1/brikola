@@ -1,19 +1,23 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye } from 'lucide-react';
+import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrder } from '../contexts/OrderContext';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, userType, setUserType } = useOrder();
+  const { orders, userType, setUserType, hasActiveSubscription } = useOrder();
   const [activeFilter, setActiveFilter] = useState<'all' | 'my-orders' | 'pending' | 'in-progress' | 'completed'>('all');
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
         return <Clock className="w-4 h-4 text-orange-500" />;
+      case 'open-for-discussion':
+        return <MessageCircle className="w-4 h-4 text-blue-500" />;
       case 'accepted':
+      case 'waiting-client-approval':
+        return <Package className="w-4 h-4 text-yellow-500" />;
       case 'in-progress':
         return <Package className="w-4 h-4 text-blue-500" />;
       case 'completed':
@@ -27,10 +31,14 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'في الانتظار';
+      case 'open-for-discussion':
+        return 'مفتوح للمناقشة';
       case 'accepted':
         return 'مقبول';
       case 'rejected':
         return 'مرفوض';
+      case 'waiting-client-approval':
+        return 'انتظار موافقة العميل';
       case 'in-progress':
         return 'قيد التنفيذ';
       case 'completed':
@@ -42,7 +50,11 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'open-for-discussion':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'accepted':
+      case 'waiting-client-approval':
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'in-progress':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'completed':
@@ -57,9 +69,9 @@ const Orders: React.FC = () => {
       case 'my-orders':
         return userType === 'client';
       case 'pending':
-        return order.status === 'pending';
+        return order.status === 'pending' || order.status === 'open-for-discussion';
       case 'in-progress':
-        return order.status === 'in-progress' || order.status === 'accepted';
+        return order.status === 'in-progress' || order.status === 'accepted' || order.status === 'waiting-client-approval';
       case 'completed':
         return order.status === 'completed';
       default:
@@ -79,7 +91,15 @@ const Orders: React.FC = () => {
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-800">الطلبات</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-800">الطلبات</h1>
+              {userType === 'crafter' && hasActiveSubscription() && (
+                <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-2 py-1 rounded-full text-xs">
+                  <Crown className="w-3 h-3" />
+                  <span>مميز</span>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => navigate('/create-order')}
               className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
@@ -117,6 +137,23 @@ const Orders: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Subscription Notice for Crafters */}
+      {userType === 'crafter' && !hasActiveSubscription() && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+          <div className="text-center">
+            <p className="text-amber-800 text-sm">
+              اشترك الآن لعرض تفاصيل الطلبات والتفاعل مع العملاء
+            </p>
+            <button
+              onClick={() => navigate('/subscription')}
+              className="mt-2 bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+            >
+              عرض خطط الاشتراك
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white border-b border-gray-200">
@@ -208,7 +245,7 @@ const Orders: React.FC = () => {
                 عرض التفاصيل
               </button>
               
-              {(order.status === 'accepted' || order.status === 'in-progress') && (
+              {(order.status === 'open-for-discussion' || order.status === 'waiting-client-approval' || order.status === 'in-progress') && (
                 <button
                   onClick={() => navigate(`/chat/${order.id}`)}
                   className="px-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex items-center gap-2"
