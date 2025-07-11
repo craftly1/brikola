@@ -1,70 +1,36 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-interface Order {
-  id: string;
-  title: string;
-  description: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  price: number;
-  category: string;
-  createdAt: string;
-  rating?: number;
-}
+import { useOrder } from '../contexts/OrderContext';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'my-orders' | 'my-services'>('all');
+  const { orders, userType, setUserType } = useOrder();
+  const [activeFilter, setActiveFilter] = useState<'all' | 'my-orders' | 'pending' | 'in-progress' | 'completed'>('all');
 
-  // بيانات تجريبية للطلبات
-  const orders: Order[] = [
-    {
-      id: '1',
-      title: 'إصلاح دولاب المطبخ',
-      description: 'أحتاج نجار لإصلاح دولاب المطبخ المكسور',
-      status: 'pending',
-      price: 150,
-      category: 'نجارة',
-      createdAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      title: 'تركيب مكيف هواء',
-      description: 'مطلوب فني تكييف لتركيب مكيف جديد',
-      status: 'in-progress',
-      price: 300,
-      category: 'تكييف',
-      createdAt: '2024-01-14'
-    },
-    {
-      id: '3',
-      title: 'صباغة غرفة النوم',
-      description: 'صباغة غرفة نوم بلون أبيض',
-      status: 'completed',
-      price: 200,
-      category: 'صباغة',
-      createdAt: '2024-01-10',
-      rating: 5
-    }
-  ];
-
-  const getStatusIcon = (status: Order['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
         return <Clock className="w-4 h-4 text-orange-500" />;
+      case 'accepted':
       case 'in-progress':
         return <Package className="w-4 h-4 text-blue-500" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'rejected':
+        return <CheckCircle className="w-4 h-4 text-red-500" />;
     }
   };
 
-  const getStatusText = (status: Order['status']) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
         return 'في الانتظار';
+      case 'accepted':
+        return 'مقبول';
+      case 'rejected':
+        return 'مرفوض';
       case 'in-progress':
         return 'قيد التنفيذ';
       case 'completed':
@@ -72,16 +38,34 @@ const Orders: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: Order['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
         return 'bg-orange-50 text-orange-700 border-orange-200';
+      case 'accepted':
       case 'in-progress':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'completed':
         return 'bg-green-50 text-green-700 border-green-200';
+      case 'rejected':
+        return 'bg-red-50 text-red-700 border-red-200';
     }
   };
+
+  const filteredOrders = orders.filter(order => {
+    switch (activeFilter) {
+      case 'my-orders':
+        return userType === 'client';
+      case 'pending':
+        return order.status === 'pending';
+      case 'in-progress':
+        return order.status === 'in-progress' || order.status === 'accepted';
+      case 'completed':
+        return order.status === 'completed';
+      default:
+        return true;
+    }
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,14 +90,43 @@ const Orders: React.FC = () => {
         </div>
       </div>
 
+      {/* User Type Toggle */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-3 sm:px-4 py-3">
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setUserType('client')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                userType === 'client'
+                  ? 'bg-white text-amber-600 shadow-sm'
+                  : 'text-gray-600'
+              }`}
+            >
+              عميل
+            </button>
+            <button
+              onClick={() => setUserType('crafter')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                userType === 'crafter'
+                  ? 'bg-white text-amber-600 shadow-sm'
+                  : 'text-gray-600'
+              }`}
+            >
+              حرفي
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="bg-white border-b border-gray-200">
         <div className="px-3 sm:px-4 py-3">
           <div className="flex space-x-2 space-x-reverse overflow-x-auto">
             {[
               { key: 'all', label: 'جميع الطلبات' },
-              { key: 'my-orders', label: 'طلباتي' },
-              { key: 'my-services', label: 'خدماتي' }
+              { key: 'pending', label: 'في الانتظار' },
+              { key: 'in-progress', label: 'قيد التنفيذ' },
+              { key: 'completed', label: 'مكتملة' }
             ].map((filter) => (
               <button
                 key={filter.key}
@@ -133,7 +146,7 @@ const Orders: React.FC = () => {
 
       {/* Orders List */}
       <div className="px-3 sm:px-4 py-4 space-y-3 sm:space-y-4">
-        {orders.map((order) => (
+        {filteredOrders.map((order) => (
           <div
             key={order.id}
             className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200"
@@ -160,8 +173,20 @@ const Orders: React.FC = () => {
               <span>{new Date(order.createdAt).toLocaleDateString('ar-SA')}</span>
             </div>
 
+            {/* Client/Crafter Info */}
+            {userType === 'crafter' && order.clientName && (
+              <div className="text-sm text-gray-600 mb-3">
+                العميل: {order.clientName}
+              </div>
+            )}
+            {userType === 'client' && order.crafterName && (
+              <div className="text-sm text-gray-600 mb-3">
+                الحرفي: {order.crafterName}
+              </div>
+            )}
+
             {/* Price and Rating */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div className="text-lg sm:text-xl font-bold text-amber-600">
                 {order.price} ر.س
               </div>
@@ -174,12 +199,32 @@ const Orders: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-4 flex gap-2 sm:gap-3">
-              <button className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors">
+            <div className="flex gap-2 sm:gap-3">
+              <button 
+                onClick={() => navigate(`/order/${order.id}`)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Eye className="w-4 h-4" />
                 عرض التفاصيل
               </button>
-              {order.status === 'completed' && !order.rating && (
-                <button className="px-4 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm sm:text-base font-medium transition-colors">
+              
+              {(order.status === 'accepted' || order.status === 'in-progress') && (
+                <button
+                  onClick={() => navigate(`/chat/${order.id}`)}
+                  className="px-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm sm:text-base font-medium transition-colors flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  {order.hasUnreadMessages && (
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  )}
+                </button>
+              )}
+              
+              {userType === 'client' && order.status === 'completed' && !order.rating && (
+                <button
+                  onClick={() => navigate(`/rate-order/${order.id}`)}
+                  className="px-4 bg-amber-500 hover:bg-amber-600 text-white py-2 rounded-lg text-sm sm:text-base font-medium transition-colors"
+                >
                   تقييم
                 </button>
               )}
@@ -189,19 +234,21 @@ const Orders: React.FC = () => {
       </div>
 
       {/* Empty State */}
-      {orders.length === 0 && (
+      {filteredOrders.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 sm:py-16 px-4">
           <Package className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mb-4" />
           <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">لا توجد طلبات</h3>
           <p className="text-sm sm:text-base text-gray-500 text-center mb-6">
-            ابدأ بإنشاء طلب جديد أو عرض خدماتك
+            {userType === 'client' ? 'ابدأ بإنشاء طلب جديد' : 'لا توجد طلبات متاحة حالياً'}
           </p>
-          <button
-            onClick={() => navigate('/create-order')}
-            className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            إنشاء طلب جديد
-          </button>
+          {userType === 'client' && (
+            <button
+              onClick={() => navigate('/create-order')}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              إنشاء طلب جديد
+            </button>
+          )}
         </div>
       )}
     </div>
