@@ -62,12 +62,12 @@ interface OrderContextType {
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
-// بيانات تجريبية
+// بيانات تجريبية محدثة
 const mockOrders: Order[] = [
   {
     id: '1',
     title: 'إصلاح دولاب المطبخ',
-    description: 'أحتاج نجار لإصلاح دولاب المطبخ المكسور',
+    description: 'أحتاج نجار لإصلاح دولاب المطبخ المكسور، المفاصل بحاجة لاستبدال والأبواب لا تُغلق بشكل صحيح.',
     status: 'pending',
     price: 150,
     category: 'نجارة',
@@ -79,7 +79,7 @@ const mockOrders: Order[] = [
   {
     id: '2',
     title: 'تركيب مكيف هواء',
-    description: 'مطلوب فني تكييف لتركيب مكيف جديد',
+    description: 'مطلوب فني تكييف لتركيب مكيف جديد في غرفة النوم مع توصيل الكهرباء والتأكد من التثبيت الآمن.',
     status: 'open-for-discussion',
     price: 300,
     category: 'تكييف',
@@ -94,7 +94,7 @@ const mockOrders: Order[] = [
   {
     id: '3',
     title: 'صباغة غرفة النوم',
-    description: 'صباغة غرفة نوم بلون أبيض',
+    description: 'صباغة غرفة نوم بلون أبيض مع تحضير الجدران وتنظيفها قبل الصباغة.',
     status: 'completed',
     price: 200,
     category: 'صباغة',
@@ -105,7 +105,36 @@ const mockOrders: Order[] = [
     crafterId: 'crafter2',
     crafterName: 'يوسف الصباغ',
     rating: 5,
-    review: 'عمل ممتاز وسريع',
+    review: 'عمل ممتاز وسريع، الحرفي محترف جداً والنتيجة فاقت التوقعات',
+    clientApproved: true
+  },
+  {
+    id: '4',
+    title: 'إصلاح تسريب السباكة',
+    description: 'يوجد تسريب في حمام الضيوف يحتاج إصلاح عاجل قبل أن يسبب أضرار في الأرضية.',
+    status: 'waiting-client-approval',
+    price: 120,
+    category: 'سباكة',
+    createdAt: '2024-01-12T14:20:00Z',
+    clientName: 'خالد العبدالله',
+    clientPhone: '+966502345678',
+    clientLocation: 'الرياض، المملكة العربية السعودية',
+    crafterId: 'crafter1',
+    crafterName: 'محمد النجار'
+  },
+  {
+    id: '5',
+    title: 'تركيب إضاءة LED',
+    description: 'تركيب إضاءة LED حديثة في الصالة الرئيسية مع تعديل التوصيلات الكهربائية إذا لزم الأمر.',
+    status: 'in-progress',
+    price: 250,
+    category: 'كهرباء',
+    createdAt: '2024-01-11T11:45:00Z',
+    clientName: 'نورا السليم',
+    clientPhone: '+966503456789',
+    clientLocation: 'جدة، المملكة العربية السعودية',
+    crafterId: 'crafter1',
+    crafterName: 'محمد النجار',
     clientApproved: true
   }
 ];
@@ -116,7 +145,7 @@ const mockMessages: Message[] = [
     orderId: '2',
     senderId: 'client1',
     senderName: 'فاطمة علي',
-    content: 'متى يمكنك البدء في العمل؟',
+    content: 'السلام عليكم، متى يمكنك البدء في العمل؟',
     timestamp: '2024-01-14T16:00:00Z',
     status: 'read',
     type: 'text'
@@ -126,9 +155,19 @@ const mockMessages: Message[] = [
     orderId: '2',
     senderId: 'crafter1',
     senderName: 'محمد النجار',
-    content: 'يمكنني البدء غداً صباحاً إن شاء الله',
+    content: 'وعليكم السلام، يمكنني البدء غداً صباحاً إن شاء الله. هل المكيف جاهز للتركيب؟',
     timestamp: '2024-01-14T16:30:00Z',
     status: 'delivered',
+    type: 'text'
+  },
+  {
+    id: '3',
+    orderId: '5',
+    senderId: 'crafter1',
+    senderName: 'محمد النجار',
+    content: 'تم الانتهاء من 80% من العمل، سأكمل باقي التوصيلات غداً',
+    timestamp: '2024-01-13T18:00:00Z',
+    status: 'read',
     type: 'text'
   }
 ];
@@ -148,7 +187,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [subscription, setSubscription] = useState<Subscription | null>(mockSubscription);
-  const [userType, setUserType] = useState<'client' | 'crafter' | null>(null);
+  const [userType, setUserType] = useState<'client' | 'crafter' | null>('client');
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
     const newOrder: Order = {
@@ -221,7 +260,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const rateOrder = (orderId: string, rating: number, review: string) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId 
-        ? { ...order, rating, review }
+        ? { ...order, rating, review, status: 'completed' }
         : order
     ));
     
