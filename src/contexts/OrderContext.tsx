@@ -47,8 +47,8 @@ interface OrderContextType {
   orders: Order[];
   messages: Message[];
   subscription: Subscription | null;
-  userType: 'client' | 'crafter';
-  setUserType: (type: 'client' | 'crafter') => void;
+  userType: 'client' | 'crafter' | null;
+  setUserType: (type: 'client' | 'crafter' | null) => void;
   addOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
   updateOrderStatus: (orderId: string, status: Order['status'], crafterId?: string, crafterName?: string) => void;
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
@@ -148,7 +148,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [subscription, setSubscription] = useState<Subscription | null>(mockSubscription);
-  const [userType, setUserType] = useState<'client' | 'crafter'>('client');
+  const [userType, setUserType] = useState<'client' | 'crafter' | null>(null);
 
   const addOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
     const newOrder: Order = {

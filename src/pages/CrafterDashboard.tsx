@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Shield, Package, Clock, MessageCircle, Star, Eye, User } from 'lucide-react';
+import { Crown, Shield, Package, Clock, MessageCircle, Star, Eye, User, Settings } from 'lucide-react';
 import { useOrder } from '../contexts/OrderContext';
 
 const CrafterDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, hasActiveSubscription, subscription } = useOrder();
+  const { orders, hasActiveSubscription, subscription, setUserType } = useOrder();
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'discussion' | 'active'>('all');
 
   // فلترة الطلبات حسب الحرفي
@@ -76,27 +76,36 @@ const CrafterDashboard: React.FC = () => {
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-gray-800">لوحة الحرفي</h1>
+              <span className="text-sm text-gray-600 bg-amber-100 px-2 py-1 rounded-full">حرفي</span>
               {hasActiveSubscription() && (
-                <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-3 py-1 rounded-full text-sm">
-                  <Crown className="w-4 h-4" />
+                <div className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-2 py-1 rounded-full text-xs">
+                  <Crown className="w-3 h-3" />
                   <span>مميز</span>
                 </div>
               )}
             </div>
-            <button
-              onClick={() => navigate('/subscription')}
-              className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
-            >
-              <Crown className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/subscription')}
+                className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors"
+              >
+                <Crown className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => navigate('/settings')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                onClick={() => setUserType(null)}
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors"
+              >
+                تغيير
+              </button>
+            </div>
           </div>
         </div>
       </div>

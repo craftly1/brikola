@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, MessageCircle, Star, Clock, CheckCircle, User, Crown } from 'lucide-react';
+import { Plus, MessageCircle, Star, CheckCircle, User, Crown, Settings, Package } from 'lucide-react';
 import { useOrder } from '../contexts/OrderContext';
 
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { orders } = useOrder();
+  const { orders, setUserType } = useOrder();
 
   // فلترة الطلبات الخاصة بالعميل
   const clientOrders = orders.filter(order => order.clientName);
@@ -69,19 +69,24 @@ const ClientDashboard: React.FC = () => {
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h1 className="text-xl font-bold text-gray-800">لوحة العميل</h1>
-            <button
-              onClick={() => navigate('/create-order')}
-              className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-gray-800">مرحباً بك</h1>
+              <span className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded-full">عميل</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/settings')}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Settings className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
+                onClick={() => setUserType(null)}
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors"
+              >
+                تغيير
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -91,17 +96,17 @@ const ClientDashboard: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => navigate('/create-order')}
-            className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl font-medium transition-colors"
+            className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
           >
-            <Plus className="w-6 h-6 mx-auto mb-2" />
-            <div>طلب جديد</div>
+            <Plus className="w-6 h-6" />
+            <span>طلب جديد</span>
           </button>
           <button
             onClick={() => navigate('/orders')}
-            className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl font-medium transition-colors"
+            className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
           >
-            <CheckCircle className="w-6 h-6 mx-auto mb-2" />
-            <div>جميع الطلبات</div>
+            <Package className="w-6 h-6" />
+            <span>جميع الطلبات</span>
           </button>
         </div>
 
