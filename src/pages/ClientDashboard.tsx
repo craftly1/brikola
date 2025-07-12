@@ -1,15 +1,15 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MessageCircle, Star, CheckCircle, User, Crown, Settings, Package } from 'lucide-react';
+import { Plus, MessageCircle, Star, CheckCircle, User, Crown, Settings, Package, Eye } from 'lucide-react';
 import { useOrder } from '../contexts/OrderContext';
 
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { orders, setUserType } = useOrder();
 
-  // فلترة الطلبات الخاصة بالعميل
-  const clientOrders = orders.filter(order => order.clientName);
+  // فلترة الطلبات الخاصة بالعميل فقط
+  const clientOrders = orders.filter(order => order.clientName && order.status !== 'pending');
   
   // الحرفيون الذين تواصل معهم العميل
   const connectedCrafters = clientOrders
@@ -31,8 +31,6 @@ const ClientDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'open-for-discussion':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'waiting-client-approval':
@@ -48,8 +46,6 @@ const ClientDashboard: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'في الانتظار';
       case 'open-for-discussion':
         return 'جاري النقاش';
       case 'waiting-client-approval':
@@ -103,14 +99,14 @@ const ClientDashboard: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/orders')}
-            className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
+            className="bg-gray-500 hover:bg-gray-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
           >
-            <Package className="w-6 h-6" />
-            <span>جميع الطلبات</span>
+            <Eye className="w-6 h-6" />
+            <span>تصفح الطلبات</span>
           </button>
         </div>
 
-        {/* الحرفيون المتصلون */}
+        {/* الحرفيون المتواصلون */}
         {connectedCrafters.length > 0 && (
           <div>
             <h2 className="text-lg font-bold text-gray-800 mb-4">الحرفيون المتواصلون معك</h2>
@@ -169,9 +165,20 @@ const ClientDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* الطلبات الحديثة */}
+        {/* طلباتك الأخيرة */}
         <div>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">طلباتك الأخيرة</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-800">طلباتك الأخيرة</h2>
+            {clientOrders.length > 3 && (
+              <button
+                onClick={() => navigate('/orders')}
+                className="text-blue-500 text-sm font-medium"
+              >
+                عرض الكل
+              </button>
+            )}
+          </div>
+          
           <div className="space-y-3">
             {clientOrders.slice(0, 3).map((order) => (
               <div
@@ -181,7 +188,7 @@ const ClientDashboard: React.FC = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-gray-800">{order.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{order.description}</p>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-1">{order.description}</p>
                   </div>
                   <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                     {getStatusText(order.status)}
@@ -200,15 +207,6 @@ const ClientDashboard: React.FC = () => {
               </div>
             ))}
           </div>
-
-          {clientOrders.length > 3 && (
-            <button
-              onClick={() => navigate('/orders')}
-              className="w-full mt-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-            >
-              عرض جميع الطلبات ({clientOrders.length})
-            </button>
-          )}
         </div>
 
         {/* Empty State */}

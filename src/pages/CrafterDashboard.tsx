@@ -1,28 +1,28 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Crown, Shield, Package, Clock, MessageCircle, Star, Eye, User, Settings } from 'lucide-react';
+import { Crown, Shield, Package, Clock, MessageCircle, Star, Eye, User, Settings, Plus } from 'lucide-react';
 import { useOrder } from '../contexts/OrderContext';
 
 const CrafterDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { orders, hasActiveSubscription, subscription, setUserType } = useOrder();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'discussion' | 'active'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'discussion' | 'active' | 'completed'>('all');
 
-  // فلترة الطلبات حسب الحرفي
-  const availableOrders = orders.filter(order => 
-    order.status === 'pending' || 
-    (order.crafterId === 'currentCrafter' && ['open-for-discussion', 'accepted', 'waiting-client-approval', 'in-progress', 'completed'].includes(order.status))
+  // الطلبات التي قدم عليها الحرفي (مرتبطة بـ crafterId)
+  const crafterOrders = orders.filter(order => 
+    order.crafterId === 'currentCrafter' && 
+    ['open-for-discussion', 'accepted', 'waiting-client-approval', 'in-progress', 'completed'].includes(order.status)
   );
 
-  const filteredOrders = availableOrders.filter(order => {
+  const filteredOrders = crafterOrders.filter(order => {
     switch (activeFilter) {
-      case 'pending':
-        return order.status === 'pending';
       case 'discussion':
         return order.status === 'open-for-discussion';
       case 'active':
         return ['accepted', 'waiting-client-approval', 'in-progress'].includes(order.status);
+      case 'completed':
+        return order.status === 'completed';
       default:
         return true;
     }
@@ -38,8 +38,6 @@ const CrafterDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'open-for-discussion':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'waiting-client-approval':
@@ -55,8 +53,6 @@ const CrafterDashboard: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'طلب جديد';
       case 'open-for-discussion':
         return 'جاري النقاش';
       case 'waiting-client-approval':
@@ -126,6 +122,24 @@ const CrafterDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => navigate('/orders')}
+            className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
+          >
+            <Plus className="w-6 h-6" />
+            <span>تصفح الطلبات</span>
+          </button>
+          <button
+            onClick={() => navigate('/subscription')}
+            className="bg-amber-500 hover:bg-amber-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
+          >
+            <Crown className="w-6 h-6" />
+            <span>العضوية</span>
+          </button>
+        </div>
+
         {/* إحصائيات الحرفي */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl p-4 text-center">
@@ -146,7 +160,7 @@ const CrafterDashboard: React.FC = () => {
           <div className="bg-white rounded-xl p-4 text-center">
             <Eye className="w-8 h-8 text-green-500 mx-auto mb-2" />
             <div className="text-2xl font-bold text-gray-800">{crafterStats.pendingOrders}</div>
-            <div className="text-sm text-gray-600">طلب جديد</div>
+            <div className="text-sm text-gray-600">طلب متاح</div>
           </div>
         </div>
 
@@ -169,90 +183,110 @@ const CrafterDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex space-x-2 space-x-reverse overflow-x-auto pb-2">
-          {[
-            { key: 'all', label: 'جميع الطلبات' },
-            { key: 'pending', label: 'طلبات جديدة' },
-            { key: 'discussion', label: 'جاري النقاش' },
-            { key: 'active', label: 'طلبات نشطة' }
-          ].map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => setActiveFilter(filter.key as any)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeFilter === filter.key
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </div>
+        {/* الطلبات التي قدمت عليها */}
+        <div>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">طلباتك</h2>
+          
+          {/* Filters */}
+          <div className="flex space-x-2 space-x-reverse overflow-x-auto pb-2 mb-4">
+            {[
+              { key: 'all', label: 'جميع طلباتك' },
+              { key: 'discussion', label: 'جاري النقاش' },
+              { key: 'active', label: 'طلبات نشطة' },
+              { key: 'completed', label: 'مكتملة' }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setActiveFilter(filter.key as any)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeFilter === filter.key
+                    ? 'bg-blue-500 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
 
-        {/* Orders List */}
-        <div className="space-y-4">
-          {filteredOrders.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-xl p-4 shadow-sm"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800 mb-1">{order.title}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{order.description}</p>
+          {/* Orders List */}
+          <div className="space-y-4">
+            {filteredOrders.map((order) => (
+              <div
+                key={order.id}
+                className="bg-white rounded-xl p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-800 mb-1">{order.title}</h3>
+                    <p className="text-sm text-gray-600 line-clamp-2">{order.description}</p>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                    {getStatusText(order.status)}
+                  </div>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                  {getStatusText(order.status)}
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-4 text-sm text-gray-600">
-                  <span className="bg-gray-100 px-2 py-1 rounded-lg">{order.category}</span>
-                  <span>{new Date(order.createdAt).toLocaleDateString('ar-SA')}</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span className="bg-gray-100 px-2 py-1 rounded-lg">{order.category}</span>
+                    <span>{new Date(order.createdAt).toLocaleDateString('ar-SA')}</span>
+                  </div>
+                  <div className="text-lg font-bold text-blue-600">{order.price} ر.س</div>
                 </div>
-                <div className="text-lg font-bold text-blue-600">{order.price} ر.س</div>
-              </div>
 
-              {order.clientName && (
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
-                  <User className="w-4 h-4" />
-                  <span>العميل: {order.clientName}</span>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => navigate(`/order/${order.id}`)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  عرض التفاصيل
-                </button>
-                
-                {(order.status === 'open-for-discussion' || order.status === 'waiting-client-approval' || order.status === 'in-progress') && (
-                  <button
-                    onClick={() => navigate(`/chat/${order.id}`)}
-                    className="px-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    {order.hasUnreadMessages && (
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    )}
-                  </button>
+                {order.clientName && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                    <User className="w-4 h-4" />
+                    <span>العميل: {order.clientName}</span>
+                  </div>
                 )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => navigate(`/order/${order.id}`)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    عرض التفاصيل
+                  </button>
+                  
+                  {(order.status === 'open-for-discussion' || order.status === 'waiting-client-approval' || order.status === 'in-progress') && (
+                    <button
+                      onClick={() => navigate(`/chat/${order.id}`)}
+                      className="px-4 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      {order.hasUnreadMessages && (
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* Empty State */}
         {filteredOrders.length === 0 && (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-600 mb-2">لا توجد طلبات</h3>
-            <p className="text-gray-500">لا توجد طلبات متاحة في هذا القسم حالياً</p>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">
+              {crafterOrders.length === 0 ? 'لم تقدم على أي طلبات بعد' : 'لا توجد طلبات في هذا القسم'}
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {crafterOrders.length === 0 
+                ? 'تصفح الطلبات المتاحة وقدم على ما يناسبك' 
+                : 'لا توجد طلبات متاحة في هذا القسم حالياً'
+              }
+            </p>
+            {crafterOrders.length === 0 && (
+              <button
+                onClick={() => navigate('/orders')}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                تصفح الطلبات المتاحة
+              </button>
+            )}
           </div>
         )}
       </div>
