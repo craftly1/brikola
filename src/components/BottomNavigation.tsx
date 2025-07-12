@@ -1,16 +1,18 @@
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Package, User, Settings } from 'lucide-react';
+import { Home, MessageCircle, Package, User, Settings, Plus } from 'lucide-react';
+import { useOrder } from '../contexts/OrderContext';
 
 const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { userType } = useOrder();
 
   const navItems = [
     { path: '/', icon: Home, label: 'الرئيسية' },
-    { path: '/inquiries', icon: MessageCircle, label: 'استفسارات' },
     { path: '/orders', icon: Package, label: 'الطلبات' },
+    ...(userType === 'client' ? [{ path: '/create-order', icon: Plus, label: 'طلب جديد' }] : []),
     { path: '/profile', icon: User, label: 'حسابي' },
     { path: '/settings', icon: Settings, label: 'إعدادات' }
   ];

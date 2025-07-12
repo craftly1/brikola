@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye, Crown, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye, Crown, AlertCircle, User, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrder } from '../contexts/OrderContext';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, userType, hasActiveSubscription } = useOrder();
+  const { orders, userType, hasActiveSubscription, setUserType } = useOrder();
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
 
   const getStatusIcon = (status: string) => {
@@ -105,7 +105,38 @@ const Orders: React.FC = () => {
             <div className="flex items-center gap-2">
               <h1 className="text-lg sm:text-xl font-bold text-gray-800">الطلبات المتاحة</h1>
             </div>
-            <div className="w-10"></div> {/* Spacer for alignment */}
+            <div className="w-10"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* User Type Selector - للمراجعة فقط */}
+      <div className="bg-amber-50 border border-amber-200 mx-4 mt-4 p-4 rounded-xl">
+        <div className="text-center mb-3">
+          <p className="text-amber-800 text-sm mb-3">للمراجعة: تبديل نوع المستخدم</p>
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => setUserType('client')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                userType === 'client' 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              عميل
+            </button>
+            <button
+              onClick={() => setUserType('crafter')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                userType === 'crafter' 
+                  ? 'bg-amber-500 text-white' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <Wrench className="w-4 h-4" />
+              حرفي
+            </button>
           </div>
         </div>
       </div>
