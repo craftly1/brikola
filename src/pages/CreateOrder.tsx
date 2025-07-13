@@ -223,7 +223,7 @@ const CreateOrder: React.FC = () => {
               <>
                 <Plus className="w-5 h-5" />
                 نشر الطلب
-              </Plus>
+              </>
             )}
           </button>
         </form>
