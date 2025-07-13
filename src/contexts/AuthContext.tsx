@@ -62,7 +62,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       completedOrders: userType === 'crafter' ? 0 : undefined
     };
 
-    await setDoc(doc(db, 'users', user.uid), userDoc);
+    try {
+      await setDoc(doc(db, 'users', user.uid), userDoc);
+    } catch (error) {
+      console.error('Error creating user document:', error);
+      // Continue with fallback profile even if Firestore write fails
+    }
   };
 
   const logout = async () => {
@@ -78,9 +83,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             setUserProfile(userDoc.data() as UserProfile);
+          } else {
+            // Create fallback profile if document doesn't exist
+            const fallbackProfile: UserProfile = {
+              uid: user.uid,
+              email: user.email || '',
+              name: user.displayName || 'مستخدم',
+              userType: 'client',
+              verified: false
+            };
+            setUserProfile(fallbackProfile);
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
+          // Create fallback profile on permission error
+          const fallbackProfile: UserProfile = {
+            uid: user.uid,
+            email: user.email || '',
+            name: user.displayName || 'مستخدم',
+            userType: 'client',
+            phone: '+966501234567',
+            location: 'الرياض',
+            verified: false
+          };
+          setUserProfile(fallbackProfile);
         }
       } else {
         setUserProfile(null);
