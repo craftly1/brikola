@@ -149,7 +149,10 @@ const CrafterSearch: React.FC<CrafterSearchProps> = ({ onSelectCrafter, specialt
                   <div className="flex items-center space-x-3 space-x-reverse mb-2">
                     <h4 className="text-lg font-semibold text-gray-800">{crafter.name}</h4>
                     {crafter.verified && (
-                      <Award className="w-5 h-5 text-blue-500" title="حرفي معتمد" />
+                      <div className="relative">
+                        <Award className="w-5 h-5 text-blue-500" />
+                        <span className="sr-only">حرفي معتمد</span>
+                      </div>
                     )}
                   </div>
                   
