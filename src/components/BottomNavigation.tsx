@@ -2,12 +2,12 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Package, MessageSquare, Plus, User } from 'lucide-react';
-import { useOrder } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userType } = useOrder();
+  const { userProfile } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -15,7 +15,7 @@ const BottomNavigation: React.FC = () => {
     { icon: Home, label: 'الرئيسية', path: '/' },
     { icon: MessageSquare, label: 'الاستفسارات', path: '/inquiries' },
     { icon: Package, label: 'الطلبات', path: '/orders' },
-    ...(userType === 'client' ? [{ icon: Plus, label: 'طلب جديد', path: '/create-order' }] : []),
+    ...(userProfile?.userType === 'client' ? [{ icon: Plus, label: 'طلب جديد', path: '/create-order' }] : []),
     { icon: User, label: 'الملف الشخصي', path: '/profile' }
   ];
 
