@@ -2,18 +2,32 @@
 import React from 'react';
 import { ArrowLeft, User, Phone, MapPin, Star, Calendar, Package, Crown, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useOrder } from '../contexts/OrderContext';
+import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { userType, orders, subscription, hasActiveSubscription } = useOrder();
+  const { orders } = useOrders();
+  const { userProfile } = useAuth(); 
 
-  const userOrders = userType === 'client' 
-    ? orders.filter(order => order.clientName === 'أحمد محمد') // Mock data
-    : orders.filter(order => order.crafterId === 'crafter1'); // Mock data
+  // فلترة الطلبات حسب نوع المستخدم
+  const userOrders = userProfile?.userType === 'client' 
+    ? orders.filter(order => order.clientId === userProfile.uid)
+    : orders.filter(order => order.crafterId === userProfile?.uid);
 
-  const completedOrders = userOrders.filter(order => order.status === 'completed');
+  const completedOrders = userOrders.filter(order => order.status === 'completed' || order.status === 'rated');
   const averageRating = completedOrders.reduce((acc, order) => acc + (order.rating || 0), 0) / completedOrders.length || 0;
+
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري تحميل الملف الشخصي...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -47,12 +61,12 @@ const Profile: React.FC = () => {
             </div>
             <div className="flex-1">
               <h2 className="text-xl font-bold text-gray-800">
-                {userType === 'client' ? 'أحمد محمد' : 'محمد النجار'}
+                {userProfile.name}
               </h2>
               <p className="text-gray-600">
-                {userType === 'client' ? 'عميل' : 'حرفي نجارة'}
+                {userProfile.userType === 'client' ? 'عميل' : `حرفي ${userProfile.specialty || ''}`}
               </p>
-              {userType === 'crafter' && averageRating > 0 && (
+              {userProfile.userType === 'crafter' && averageRating > 0 && (
                 <div className="flex items-center gap-1 mt-1">
                   <Star className="w-4 h-4 text-yellow-500 fill-current" />
                   <span className="text-sm text-gray-600">{averageRating.toFixed(1)}</span>
@@ -64,51 +78,18 @@ const Profile: React.FC = () => {
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-gray-600">
               <Phone className="w-5 h-5" />
-              <span>+966501234567</span>
+              <span>{userProfile.phone || 'لم يتم إضافة رقم الهاتف'}</span>
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               <MapPin className="w-5 h-5" />
-              <span>الرياض، المملكة العربية السعودية</span>
+              <span>{userProfile.location || 'لم يتم إضافة الموقع'}</span>
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               <Calendar className="w-5 h-5" />
-              <span>عضو منذ يناير 2024</span>
+              <span>عضو منذ {new Date().toLocaleDateString('ar-SA')}</span>
             </div>
           </div>
         </div>
-
-        {/* Subscription Card for Crafters */}
-        {userType === 'crafter' && (
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">الاشتراك</h3>
-              <Crown className="w-6 h-6 text-amber-500" />
-            </div>
-            
-            {hasActiveSubscription() && subscription ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">الخطة الحالية:</span>
-                  <span className="font-medium text-green-600">{subscription.planName}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">تاريخ الانتهاء:</span>
-                  <span className="font-medium">{new Date(subscription.endDate).toLocaleDateString('ar-SA')}</span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-600 mb-3">لا يوجد اشتراك نشط</p>
-                <button
-                  onClick={() => navigate('/subscription')}
-                  className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  عرض الخطط
-                </button>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Statistics Card */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -120,7 +101,7 @@ const Profile: React.FC = () => {
                 {userOrders.length}
               </div>
               <div className="text-sm text-blue-600">
-                {userType === 'client' ? 'إجمالي الطلبات' : 'الطلبات المتقدم عليها'}
+                {userProfile.userType === 'client' ? 'إجمالي الطلبات' : 'الطلبات المقبولة'}
               </div>
             </div>
             

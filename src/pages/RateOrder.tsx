@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Star, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useOrder } from '../contexts/OrderContext';
+import { useOrders } from '../contexts/FirebaseOrderContext';
 
 const RateOrder: React.FC = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const { orders, rateOrder } = useOrder();
+  const { orders, rateOrder } = useOrders();
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,12 +43,16 @@ const RateOrder: React.FC = () => {
 
     setIsSubmitting(true);
     
-    setTimeout(() => {
-      rateOrder(order.id, rating, review.trim());
-      setIsSubmitting(false);
+    try {
+      await rateOrder(order.id, rating, review.trim());
       alert('شكراً لك! تم إرسال التقييم بنجاح');
       navigate('/');
-    }, 1000);
+    } catch (error) {
+      console.error('Error rating order:', error);
+      alert('حدث خطأ أثناء إرسال التقييم');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

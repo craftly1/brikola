@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, MapPin, DollarSign } from 'lucide-react';
+import { ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useOrder } from '../contexts/OrderContext';
+import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
-  const { addOrder } = useOrder();
+  const { createOrder } = useOrders();
+  const { userProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -14,9 +16,7 @@ const CreateOrder: React.FC = () => {
     description: '',
     category: '',
     price: '',
-    clientName: '',
-    clientPhone: '',
-    clientLocation: ''
+    clientLocation: userProfile?.location || ''
   });
 
   const categories = [
@@ -33,35 +33,39 @@ const CreateOrder: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userProfile) {
+      alert('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Validation
     if (!formData.title || !formData.description || !formData.category || 
-        !formData.price || !formData.clientName || !formData.clientPhone || !formData.clientLocation) {
+        !formData.price || !formData.clientLocation) {
       alert('يرجى ملء جميع الحقول');
       setIsSubmitting(false);
       return;
     }
 
     try {
-      addOrder({
+      await createOrder({
         title: formData.title,
         description: formData.description,
         category: formData.category,
         price: parseFloat(formData.price),
-        status: 'pending',
-        clientName: formData.clientName,
-        clientPhone: formData.clientPhone,
+        clientPhone: userProfile.phone,
         clientLocation: formData.clientLocation
       });
 
-      setTimeout(() => {
-        setIsSubmitting(false);
-        navigate('/');
-      }, 1000);
+      alert('تم إنشاء الطلب بنجاح!');
+      navigate('/');
     } catch (error) {
-      setIsSubmitting(false);
+      console.error('Error creating order:', error);
       alert('حدث خطأ أثناء إنشاء الطلب');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,6 +75,23 @@ const CreateOrder: React.FC = () => {
       [e.target.name]: e.target.value
     }));
   };
+
+  if (!userProfile || userProfile.userType !== 'client') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">غير مصرح</h2>
+          <p className="text-gray-600 mb-4">هذه الصفحة متاحة للعملاء فقط</p>
+          <button
+            onClick={() => navigate('/')}
+            className="text-blue-500 hover:text-blue-600 font-medium"
+          >
+            العودة للرئيسية
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -166,43 +187,6 @@ const CreateOrder: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Contact Details Card */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">معلومات التواصل</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  الاسم *
-                </label>
-                <input
-                  type="text"
-                  name="clientName"
-                  value={formData.clientName}
-                  onChange={handleChange}
-                  placeholder="اسمك الكامل"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  رقم الهاتف *
-                </label>
-                <input
-                  type="tel"
-                  name="clientPhone"
-                  value={formData.clientPhone}
-                  onChange={handleChange}
-                  placeholder="+966501234567"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -239,7 +223,7 @@ const CreateOrder: React.FC = () => {
               <>
                 <Plus className="w-5 h-5" />
                 نشر الطلب
-              </>
+              </Plus>
             )}
           </button>
         </form>

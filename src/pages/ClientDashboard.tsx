@@ -1,19 +1,21 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MessageCircle, Star, CheckCircle, User, Crown, Settings, Package, Eye } from 'lucide-react';
-import { useOrder } from '../contexts/OrderContext';
+import { Plus, MessageCircle, Star, CheckCircle, User, Settings, Package, Eye } from 'lucide-react';
+import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, setUserType } = useOrder();
+  const { orders } = useOrders();
+  const { userProfile, logout } = useAuth();
 
-  // فلترة الطلبات الخاصة بالعميل فقط
-  const clientOrders = orders.filter(order => order.clientName && order.status !== 'pending');
+  // فلترة الطلبات الخاصة بالعميل الحالي
+  const clientOrders = orders.filter(order => order.clientId === userProfile?.uid);
   
   // الحرفيون الذين تواصل معهم العميل
   const connectedCrafters = clientOrders
-    .filter(order => order.crafterName && (order.status === 'open-for-discussion' || order.status === 'accepted' || order.status === 'in-progress' || order.status === 'completed'))
+    .filter(order => order.crafterName && ['accepted', 'in_progress', 'completed'].includes(order.status))
     .reduce((acc, order) => {
       const crafterId = order.crafterId;
       if (crafterId && !acc.find(c => c.id === crafterId)) {
@@ -23,7 +25,7 @@ const ClientDashboard: React.FC = () => {
           lastOrder: order,
           totalOrders: clientOrders.filter(o => o.crafterId === crafterId).length,
           rating: order.rating,
-          hasActiveOrder: ['open-for-discussion', 'accepted', 'in-progress'].includes(order.status)
+          hasActiveOrder: ['accepted', 'in_progress'].includes(order.status)
         });
       }
       return acc;
@@ -31,13 +33,15 @@ const ClientDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open-for-discussion':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'waiting-client-approval':
+      case 'pending':
         return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'in-progress':
+      case 'accepted':
+        return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'in_progress':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'completed':
+        return 'bg-green-50 text-green-700 border-green-200';
+      case 'rated':
         return 'bg-green-50 text-green-700 border-green-200';
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
@@ -46,14 +50,16 @@ const ClientDashboard: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'open-for-discussion':
-        return 'جاري النقاش';
-      case 'waiting-client-approval':
-        return 'انتظار موافقتك';
-      case 'in-progress':
+      case 'pending':
+        return 'في الانتظار';
+      case 'accepted':
+        return 'مقبول';
+      case 'in_progress':
         return 'قيد التنفيذ';
       case 'completed':
         return 'مكتمل';
+      case 'rated':
+        return 'مقيم';
       default:
         return status;
     }
@@ -66,7 +72,7 @@ const ClientDashboard: React.FC = () => {
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-gray-800">مرحباً بك</h1>
+              <h1 className="text-xl font-bold text-gray-800">مرحباً {userProfile?.name}</h1>
               <span className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded-full">عميل</span>
             </div>
             <div className="flex items-center gap-2">
@@ -77,10 +83,10 @@ const ClientDashboard: React.FC = () => {
                 <Settings className="w-5 h-5 text-gray-600" />
               </button>
               <button
-                onClick={() => setUserType(null)}
+                onClick={logout}
                 className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm transition-colors"
               >
-                تغيير
+                خروج
               </button>
             </div>
           </div>
@@ -122,10 +128,7 @@ const ClientDashboard: React.FC = () => {
                         <User className="w-6 h-6 text-gray-600" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-800">{crafter.name}</h3>
-                          <Crown className="w-4 h-4 text-amber-500" />
-                        </div>
+                        <h3 className="font-semibold text-gray-800">{crafter.name}</h3>
                         <p className="text-sm text-gray-600">{crafter.totalOrders} طلب سابق</p>
                       </div>
                     </div>
