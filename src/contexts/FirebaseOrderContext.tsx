@@ -40,9 +40,21 @@ export interface Crafter {
   phone?: string;
 }
 
+export interface Subscription {
+  id: string;
+  userId: string;
+  planName: string;
+  status: 'active' | 'expired' | 'cancelled';
+  startDate: string;
+  endDate: string;
+  price: number;
+  type: 'monthly' | 'yearly';
+}
+
 interface OrderContextType {
   orders: Order[];
   crafters: Crafter[];
+  subscription: Subscription | null;
   loading: boolean;
   createOrder: (orderData: Omit<Order, 'id' | 'clientId' | 'clientName' | 'createdAt' | 'status'>) => Promise<string>;
   acceptOrder: (orderId: string) => Promise<void>;
@@ -51,6 +63,8 @@ interface OrderContextType {
   cancelOrder: (orderId: string, reason?: string) => Promise<void>;
   rateOrder: (orderId: string, rating: number, review?: string) => Promise<void>;
   searchCrafters: (specialty?: string, location?: string) => Promise<Crafter[]>;
+  hasActiveSubscription: () => boolean;
+  subscribe: (planName: string, price: number, type: 'monthly' | 'yearly') => void;
 }
 
 const OrderContext = createContext<OrderContextType | null>(null);
@@ -67,6 +81,7 @@ export const FirebaseOrderProvider: React.FC<{ children: React.ReactNode }> = ({
   const { currentUser, userProfile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [crafters, setCrafters] = useState<Crafter[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Listen to orders for current user
@@ -137,6 +152,27 @@ export const FirebaseOrderProvider: React.FC<{ children: React.ReactNode }> = ({
 
     loadCrafters();
   }, []);
+
+  // Load subscription for crafter
+  useEffect(() => {
+    if (!currentUser || !userProfile || userProfile.userType !== 'crafter') {
+      setSubscription(null);
+      return;
+    }
+
+    // Mock subscription for now - replace with Firebase query later
+    const mockSubscription: Subscription = {
+      id: '1',
+      userId: currentUser.uid,
+      planName: 'العضوية الشهرية',
+      status: 'active',
+      startDate: '2024-01-01T00:00:00Z',
+      endDate: '2024-02-01T00:00:00Z',
+      price: 50,
+      type: 'monthly'
+    };
+    setSubscription(mockSubscription);
+  }, [currentUser, userProfile]);
 
   const createOrder = async (orderData: Omit<Order, 'id' | 'clientId' | 'clientName' | 'createdAt' | 'status'>) => {
     if (!currentUser || !userProfile) throw new Error('User not authenticated');
@@ -252,9 +288,30 @@ export const FirebaseOrderProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const hasActiveSubscription = () => {
+    if (!subscription) return false;
+    return subscription.status === 'active' && new Date(subscription.endDate) > new Date();
+  };
+
+  const subscribe = (planName: string, price: number, type: 'monthly' | 'yearly') => {
+    const duration = type === 'monthly' ? 30 : 365;
+    const newSubscription: Subscription = {
+      id: Date.now().toString(),
+      userId: currentUser?.uid || '',
+      planName,
+      status: 'active',
+      startDate: new Date().toISOString(),
+      endDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
+      price,
+      type
+    };
+    setSubscription(newSubscription);
+  };
+
   const value = {
     orders,
     crafters,
+    subscription,
     loading,
     createOrder,
     acceptOrder,
@@ -262,7 +319,9 @@ export const FirebaseOrderProvider: React.FC<{ children: React.ReactNode }> = ({
     completeOrder,
     cancelOrder,
     rateOrder,
-    searchCrafters
+    searchCrafters,
+    hasActiveSubscription,
+    subscribe
   };
 
   return (

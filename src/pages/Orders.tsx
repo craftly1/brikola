@@ -17,17 +17,16 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'pending':
         return <Clock className="w-4 h-4 text-orange-500" />;
-      case 'open-for-discussion':
-        return <MessageCircle className="w-4 h-4 text-blue-500" />;
       case 'accepted':
-      case 'waiting-client-approval':
         return <Package className="w-4 h-4 text-yellow-500" />;
       case 'in_progress':
         return <Package className="w-4 h-4 text-blue-500" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'rejected':
+      case 'cancelled':
         return <CheckCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -35,18 +34,14 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'متاح للتقديم';
-      case 'open-for-discussion':
-        return 'جاري النقاش';
       case 'accepted':
         return 'مقبول';
-      case 'rejected':
-        return 'مرفوض';
-      case 'waiting-client-approval':
-        return 'انتظار موافقة العميل';
       case 'in_progress':
         return 'قيد التنفيذ';
       case 'completed':
         return 'مكتمل';
+      case 'cancelled':
+        return 'ملغي';
       default:
         return status;
     }
@@ -56,16 +51,13 @@ const Orders: React.FC = () => {
     switch (status) {
       case 'pending':
         return 'bg-green-50 text-green-700 border-green-200';
-      case 'open-for-discussion':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'accepted':
-      case 'waiting-client-approval':
         return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'in_progress':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'completed':
         return 'bg-green-50 text-green-700 border-green-200';
-      case 'rejected':
+      case 'cancelled':
         return 'bg-red-50 text-red-700 border-red-200';
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
@@ -80,7 +72,7 @@ const Orders: React.FC = () => {
       case 'pending':
         return order.status === 'pending';
       case 'in-progress':
-        return order.status === 'in_progress' || order.status === 'accepted' || order.status === 'waiting-client-approval';
+        return order.status === 'in_progress' || order.status === 'accepted';
       case 'completed':
         return order.status === 'completed';
       default:
@@ -205,7 +197,7 @@ const Orders: React.FC = () => {
 
             {/* Location */}
             <div className="text-sm text-gray-600 mb-3">
-              📍 {order.location}
+              📍 {order.clientLocation}
             </div>
 
             {/* Price */}
