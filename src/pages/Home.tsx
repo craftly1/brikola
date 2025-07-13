@@ -1,18 +1,24 @@
 
 import React from 'react';
-import { useOrder } from '../contexts/OrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import ClientDashboard from './ClientDashboard';
 import CrafterDashboard from './CrafterDashboard';
-import UserTypeSelector from '../components/UserTypeSelector';
 
 const Home: React.FC = () => {
-  const { userType } = useOrder();
+  const { userProfile } = useAuth();
 
-  if (!userType) {
-    return <UserTypeSelector />;
+  if (!userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري تحميل الملف الشخصي...</p>
+        </div>
+      </div>
+    );
   }
 
-  return userType === 'client' ? <ClientDashboard /> : <CrafterDashboard />;
+  return userProfile.userType === 'client' ? <ClientDashboard /> : <CrafterDashboard />;
 };
 
 export default Home;

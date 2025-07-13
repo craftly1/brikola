@@ -18,40 +18,67 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import BottomNavigation from "./components/BottomNavigation";
+import AuthForm from "./components/AuthForm";
 import { InquiryProvider } from "./contexts/InquiryContext";
-import { OrderProvider } from "./contexts/OrderContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { FirebaseOrderProvider } from "./contexts/FirebaseOrderContext";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <AuthForm />;
+  }
+
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/inquiries" element={<Inquiries />} />
+          <Route path="/inquiry/:id" element={<InquiryDetail />} />
+          <Route path="/create" element={<CreateInquiry />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/order/:id" element={<OrderDetail />} />
+          <Route path="/create-order" element={<CreateOrder />} />
+          <Route path="/chat/:orderId" element={<Chat />} />
+          <Route path="/rate-order/:orderId" element={<RateOrder />} />
+          <Route path="/subscription" element={<Subscription />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <BottomNavigation />
+      </div>
+    </BrowserRouter>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <InquiryProvider>
-        <OrderProvider>
-          <BrowserRouter>
-            <div className="min-h-screen bg-gray-50 pb-20">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/inquiries" element={<Inquiries />} />
-                <Route path="/inquiry/:id" element={<InquiryDetail />} />
-                <Route path="/create" element={<CreateInquiry />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/order/:id" element={<OrderDetail />} />
-                <Route path="/create-order" element={<CreateOrder />} />
-                <Route path="/chat/:orderId" element={<Chat />} />
-                <Route path="/rate-order/:orderId" element={<RateOrder />} />
-                <Route path="/subscription" element={<Subscription />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomNavigation />
-            </div>
-          </BrowserRouter>
-        </OrderProvider>
-      </InquiryProvider>
+      <AuthProvider>
+        <InquiryProvider>
+          <FirebaseOrderProvider>
+            <AppContent />
+          </FirebaseOrderProvider>
+        </InquiryProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
