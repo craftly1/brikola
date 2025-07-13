@@ -67,12 +67,12 @@ interface OrderContextType {
   subscribe: (planName: string, price: number, type: 'monthly' | 'yearly') => void;
 }
 
-const OrderContext = createContext<OrderContextType | null>(null);
+const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const useOrders = () => {
   const context = useContext(OrderContext);
-  if (!context) {
-    throw new Error('useOrders must be used within an OrderProvider');
+  if (context === undefined) {
+    throw new Error('useOrders must be used within a FirebaseOrderProvider');
   }
   return context;
 };
@@ -308,7 +308,7 @@ export const FirebaseOrderProvider: React.FC<{ children: React.ReactNode }> = ({
     setSubscription(newSubscription);
   };
 
-  const value = {
+  const value: OrderContextType = {
     orders,
     crafters,
     subscription,
