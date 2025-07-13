@@ -2,12 +2,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Crown, Star, Shield, Zap } from 'lucide-react';
-import { useOrder } from '../contexts/OrderContext';
+import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 
 const Subscription: React.FC = () => {
   const navigate = useNavigate();
-  const { subscription, subscribe, hasActiveSubscription } = useOrder();
+  const { subscription, subscribe, hasActiveSubscription } = useOrders();
+  const { userProfile } = useAuth();
 
   const plans = [
     {
@@ -51,7 +53,6 @@ const Subscription: React.FC = () => {
 
   const handleSubscribe = (planName: string, price: number, type: 'monthly' | 'yearly') => {
     subscribe(planName, price, type);
-    // هنا يتم التوجيه لصفحة الدفع
     navigate('/orders');
   };
 

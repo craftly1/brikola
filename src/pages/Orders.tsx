@@ -2,12 +2,16 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye, Crown, AlertCircle, User, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useOrder } from '../contexts/OrderContext';
+import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, userType, hasActiveSubscription, setUserType } = useOrder();
+  const { orders, hasActiveSubscription } = useOrders();
+  const { userProfile } = useAuth();
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'in-progress' | 'completed'>('all');
+
+  const userType = userProfile?.userType || 'client';
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -18,7 +22,7 @@ const Orders: React.FC = () => {
       case 'accepted':
       case 'waiting-client-approval':
         return <Package className="w-4 h-4 text-yellow-500" />;
-      case 'in-progress':
+      case 'in_progress':
         return <Package className="w-4 h-4 text-blue-500" />;
       case 'completed':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -39,10 +43,12 @@ const Orders: React.FC = () => {
         return 'مرفوض';
       case 'waiting-client-approval':
         return 'انتظار موافقة العميل';
-      case 'in-progress':
+      case 'in_progress':
         return 'قيد التنفيذ';
       case 'completed':
         return 'مكتمل';
+      default:
+        return status;
     }
   };
 
@@ -55,12 +61,14 @@ const Orders: React.FC = () => {
       case 'accepted':
       case 'waiting-client-approval':
         return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      case 'in-progress':
+      case 'in_progress':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'completed':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'rejected':
         return 'bg-red-50 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -72,7 +80,7 @@ const Orders: React.FC = () => {
       case 'pending':
         return order.status === 'pending';
       case 'in-progress':
-        return order.status === 'in-progress' || order.status === 'accepted' || order.status === 'waiting-client-approval';
+        return order.status === 'in_progress' || order.status === 'accepted' || order.status === 'waiting-client-approval';
       case 'completed':
         return order.status === 'completed';
       default:
@@ -106,37 +114,6 @@ const Orders: React.FC = () => {
               <h1 className="text-lg sm:text-xl font-bold text-gray-800">الطلبات المتاحة</h1>
             </div>
             <div className="w-10"></div>
-          </div>
-        </div>
-      </div>
-
-      {/* User Type Selector - للمراجعة فقط */}
-      <div className="bg-amber-50 border border-amber-200 mx-4 mt-4 p-4 rounded-xl">
-        <div className="text-center mb-3">
-          <p className="text-amber-800 text-sm mb-3">للمراجعة: تبديل نوع المستخدم</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => setUserType('client')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                userType === 'client' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <User className="w-4 h-4" />
-              عميل
-            </button>
-            <button
-              onClick={() => setUserType('crafter')}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                userType === 'crafter' 
-                  ? 'bg-amber-500 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              <Wrench className="w-4 h-4" />
-              حرفي
-            </button>
           </div>
         </div>
       </div>
@@ -228,7 +205,7 @@ const Orders: React.FC = () => {
 
             {/* Location */}
             <div className="text-sm text-gray-600 mb-3">
-              📍 {order.clientLocation}
+              📍 {order.location}
             </div>
 
             {/* Price */}
