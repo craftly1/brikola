@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, MessageCircle, Star, CheckCircle, User, Settings, Package, Eye } from 'lucide-react';
+import { Plus, MessageCircle, Star, CheckCircle, User, Settings, Package, Eye, Search } from 'lucide-react';
 import { useOrders } from '../contexts/FirebaseOrderContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -97,14 +97,21 @@ const ClientDashboard: React.FC = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/create-order')}
+            onClick={() => navigate("/create-order")}
             className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
           >
             <Plus className="w-6 h-6" />
             <span>طلب جديد</span>
           </button>
           <button
-            onClick={() => navigate('/orders')}
+            onClick={() => navigate("/search-crafters")}
+            className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
+          >
+            <Search className="w-6 h-6" />
+            <span>البحث عن حرفي</span>
+          </button>
+          <button
+            onClick={() => navigate("/orders")}
             className="bg-gray-500 hover:bg-gray-600 text-white p-4 rounded-xl font-medium transition-colors flex flex-col items-center gap-2"
           >
             <Eye className="w-6 h-6" />

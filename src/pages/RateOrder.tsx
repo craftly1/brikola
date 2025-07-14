@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Star, Send } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useOrders } from '../contexts/FirebaseOrderContext';
+import { useOrders } from "../contexts/FirebaseOrderContext";
+import Modal from "../components/Modal";
 
 const RateOrder: React.FC = () => {
   const navigate = useNavigate();
@@ -32,12 +33,22 @@ const RateOrder: React.FC = () => {
 
   const handleSubmitRating = async () => {
     if (rating === 0) {
-      alert('يرجى اختيار تقييم للحرفي');
+      setModal({
+        isOpen: true,
+        type: 'warning',
+        title: 'تقييم مطلوب',
+        message: 'يرجى اختيار تقييم للحرفي قبل الإرسال.'
+      });
       return;
     }
 
     if (!review.trim()) {
-      alert('يرجى كتابة تعليق على العمل');
+      setModal({
+        isOpen: true,
+        type: 'warning',
+        title: 'تعليق مطلوب',
+        message: 'يرجى كتابة تعليق على العمل قبل الإرسال.'
+      });
       return;
     }
 
@@ -45,11 +56,21 @@ const RateOrder: React.FC = () => {
     
     try {
       await rateOrder(order.id, rating, review.trim());
-      alert('شكراً لك! تم إرسال التقييم بنجاح');
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'تم إرسال التقييم',
+        message: 'شكراً لك! تم إرسال التقييم بنجاح.'
+      });
       navigate('/');
     } catch (error) {
       console.error('Error rating order:', error);
-      alert('حدث خطأ أثناء إرسال التقييم');
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'خطأ في إرسال التقييم',
+        message: 'حدث خطأ أثناء إرسال التقييم. يرجى المحاولة مرة أخرى.'
+      });
     } finally {
       setIsSubmitting(false);
     }

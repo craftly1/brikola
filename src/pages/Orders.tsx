@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, Plus, Package, Clock, CheckCircle, Star, MessageCircle, Eye, Crown, AlertCircle, User, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from '../contexts/FirebaseOrderContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from "../contexts/AuthContext";
+import Modal from "../components/Modal";
 
 const Orders: React.FC = () => {
   const navigate = useNavigate();
@@ -83,7 +84,12 @@ const Orders: React.FC = () => {
   const handleOrderClick = (orderId: string) => {
     if (userType === 'client') {
       // عرض تنبيه للعميل
-      alert('يجب التسجيل كحرفي للتقديم على الطلبات');
+      setModal({
+        isOpen: true,
+        type: 'info',
+        title: 'تسجيل كحرفي',
+        message: 'يجب التسجيل كحرفي للتقديم على الطلبات.'
+      });
       return;
     }
     // السماح للحرفي بعرض التفاصيل

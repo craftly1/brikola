@@ -1,15 +1,50 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft, Plus, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useOrders } from '../contexts/FirebaseOrderContext';
 import { useAuth } from '../contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import Modal from '../components/Modal';
 
 const CreateOrder: React.FC = () => {
   const navigate = useNavigate();
   const { createOrder } = useOrders();
   const { userProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, type: '', title: '', message: '' });
+  const { crafterId } = useParams(); // Get crafterId from URL
+  const [crafterName, setCrafterName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (crafterId) {
+      const fetchCrafter = async () => {
+        try {
+          const crafterDoc = await getDoc(doc(db, 'users', crafterId));
+          if (crafterDoc.exists()) {
+            setCrafterName(crafterDoc.data().name);
+          } else {
+            setModal({
+              isOpen: true,
+              type: 'error',
+              title: 'خطأ',
+              message: 'الحرفي المحدد غير موجود.'
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching crafter:', error);
+          setModal({
+            isOpen: true,
+            type: 'error',
+            title: 'خطأ',
+            message: 'حدث خطأ أثناء جلب بيانات الحرفي.'
+          });
+        }
+      };
+      fetchCrafter();
+    }
+  }, [crafterId]);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -35,7 +70,12 @@ const CreateOrder: React.FC = () => {
     e.preventDefault();
     
     if (!userProfile) {
-      alert('يجب تسجيل الدخول أولاً');
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'خطأ في المصادقة',
+        message: 'يجب تسجيل الدخول أولاً لإنشاء طلب.'
+      });
       return;
     }
 
@@ -44,7 +84,12 @@ const CreateOrder: React.FC = () => {
     // Validation
     if (!formData.title || !formData.description || !formData.category || 
         !formData.price || !formData.clientLocation) {
-      alert('يرجى ملء جميع الحقول');
+      setModal({
+        isOpen: true,
+        type: 'warning',
+        title: 'حقول مطلوبة',
+        message: 'يرجى ملء جميع الحقول المطلوبة.'
+      });
       setIsSubmitting(false);
       return;
     }
@@ -56,14 +101,26 @@ const CreateOrder: React.FC = () => {
         category: formData.category,
         price: parseFloat(formData.price),
         clientPhone: userProfile.phone,
-        clientLocation: formData.clientLocation
+        clientLocation: formData.clientLocation,
+        crafterId: crafterId || null,
+        crafterName: crafterName || null,
       });
 
-      alert('تم إنشاء الطلب بنجاح!');
+      setModal({
+        isOpen: true,
+        type: 'success',
+        title: 'تم إنشاء الطلب',
+        message: 'تم إنشاء طلبك بنجاح! سيتم مراجعته من قبل الحرفيين.'
+      });
       navigate('/');
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('حدث خطأ أثناء إنشاء الطلب');
+      setModal({
+        isOpen: true,
+        type: 'error',
+        title: 'خطأ في إنشاء الطلب',
+        message: 'حدث خطأ أثناء إنشاء الطلب. يرجى المحاولة مرة أخرى.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -105,7 +162,7 @@ const CreateOrder: React.FC = () => {
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <h1 className="text-xl font-bold text-gray-800">إنشاء طلب جديد</h1>
+            <h1 className="text-xl font-bold text-gray-800">إنشاء طلب جديد {crafterName && `للحرفي ${crafterName}`}</h1>
             <div className="w-10"></div>
           </div>
         </div>
@@ -183,7 +240,7 @@ const CreateOrder: React.FC = () => {
                     required
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                    ر.س
+                    د.ج
                   </div>
                 </div>
               </div>
